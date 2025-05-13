@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Print Calibration Calculator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #2c3e50;
+      }
+      .container {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .calculator {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input,
+      select {
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      .result {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #e8f4fb;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .tabs {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+        border-radius: 5px 5px 0 0;
+      }
+      .tabs button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        color: #333;
+        margin-top: 0;
+      }
+      .tabs button:hover {
+        background-color: #ddd;
+      }
+      .tabs button.active {
+        background-color: #3498db;
+        color: white;
+      }
+      .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+        border-radius: 0 0 5px 5px;
+        animation: fadeEffect 1s;
+      }
+      @keyframes fadeEffect {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>3D Print Calibration Calculator</h1>
+
+    <div class="container">
+      <h2>How to Use This Calculator</h2>
+      <p>
+        This calculator helps you determine the optimal settings for your 3D
+        printer based on calibration tests from OrcaSlicer. Follow these steps:
+      </p>
+      <ol>
+        <li>Select the calibration tab you need from the tabs below</li>
+        <li>Enter the required values based on your calibration print</li>
+        <li>Click the calculate button to get your calibrated value</li>
+        <li>Apply the calculated value to your slicer settings</li>
+      </ol>
+      <p>
+        Each calculator includes specific instructions based on the OrcaSlicer
+        calibration guide.
+      </p>
+    </div>
+
+    <div class="tabs">
+      <button class="tablinks" onclick="openTab(event, 'esteps')">
+        E-steps/Rotation Distance
+      </button>
+      <button class="tablinks" onclick="openTab(event, 'tempTower')">
+        Temperature Tower
+      </button>
+      <button class="tablinks active" onclick="openTab(event, 'flowRate')">
+        Flow Rate
+      </button>
+      <button class="tablinks" onclick="openTab(event, 'pressureAdvance')">
+        Pressure Advance
+      </button>
+      <button class="tablinks" onclick="openTab(event, 'retraction')">
+        Retraction
+      </button>
+      <button class="tablinks" onclick="openTab(event, 'inputShaping')">
+        Input Shaping
+      </button>
+    </div>
+
+    <div id="flowRate" class="tabcontent" style="display: block">
+      <h2>Flow Rate Calibration</h2>
+      <p>
+        After printing the flow rate calibration model, identify the block with
+        the smoothest top surface and enter its flow rate modifier.
+      </p>
+
+      <div class="calculator">
+        <h3>Select Method</h3>
+        <select id="flowMethod" onchange="updateFlowCalculator()">
+          <option value="pass">Pass Methods (old)</option>
+          <option value="yolo">YOLO Methods</option>
+        </select>
+
+        <div id="passMethodCalc">
+          <h3>Pass 1</h3>
+          <label for="oldFlowRatio">Current Flow Ratio:</label>
+          <input type="number" id="oldFlowRatio" value="1.0" step="0.01" />
+
+          <label for="flowRateModifier">Selected Flow Rate Modifier:</label>
+          <input
+            type="number"
+            id="flowRateModifier"
+            step="0.005"
+            placeholder="Enter modifier value (e.g. 0.005)"
+          />
+
+          <button onclick="calculateFlowRate()">
+            Calculate New Flow Ratio
+          </button>
+          <div class="result" id="flowRateResult">
+            The calculated flow ratio will appear here
+          </div>
+
+          <h3>Pass 2</h3>
+          <p>
+            After updating your flow ratio from Pass 1, perform Pass 2
+            calibration and enter the new modifier.
+          </p>
+          <label for="pass2FlowRatio">Current Flow Ratio (from Pass 1):</label>
+          <input type="number" id="pass2FlowRatio" step="0.01" />
+
+          <label for="pass2Modifier">Selected Flow Rate Modifier:</label>
+          <input
+            type="number"
+            id="pass2Modifier"
+            step="0.005"
+            placeholder="Enter modifier value (e.g. -0.005)"
+          />
+
+          <button onclick="calculatePass2FlowRate()">
+            Calculate Final Flow Ratio
+          </button>
+          <div class="result" id="pass2Result">
+            The final calculated flow ratio will appear here
+          </div>
+        </div>
+
+        <div id="yoloMethodCalc" style="display: none">
+          <h3>YOLO Method</h3>
+          <label for="yoloFlowRatio">Current Flow Ratio:</label>
+          <input type="number" id="yoloFlowRatio" value="1.0" step="0.01" />
+
+          <label for="yoloModifier">Selected Flow Rate Modifier:</label>
+          <input
+            type="number"
+            id="yoloModifier"
+            step="0.005"
+            placeholder="Enter modifier value (e.g. 0.005)"
+          />
+
+          <button onclick="calculateYoloFlowRate()">
+            Calculate New Flow Ratio
+          </button>
+          <div class="result" id="yoloResult">
+            The calculated flow ratio will appear here
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pressureAdvance" class="tabcontent">
+      <h2>Pressure Advance Calibration</h2>
+
+      <h3>Select Method</h3>
+      <select id="paMethod" onchange="updatePACalculator()">
+        <option value="line">Line Method</option>
+        <option value="tower">Tower Method</option>
+        <option value="pattern">Pattern Method</option>
+      </select>
+
+      <div id="lineMethodCalc" class="calculator">
+        <h3>Line Method</h3>
+        <p>
+          After printing the line test, identify the most even line counting
+          from the bottom (first line is line 1).
+        </p>
+        <label for="paStart">Starting PA Value:</label>
+        <input type="number" id="paStart" step="0.001" value="0" />
+
+        <label for="paStep">PA Step per line:</label>
+        <input type="number" id="paStep" step="0.001" value="0.002" />
+
+        <label for="paLineNumber"
+          >Best Line Number (counting from bottom):</label
+        >
+        <input type="number" id="paLineNumber" min="1" step="1" />
+
+        <button onclick="calculateLinePA()">Calculate PA Value</button>
+        <div class="result" id="linePAResult">
+          The calculated PA value will appear here
+        </div>
+      </div>
+
+      <div id="towerMethodCalc" class="calculator" style="display: none">
+        <h3>Tower Method</h3>
+        <p>
+          After printing the tower test, identify the section with the best
+          corners counting from the bottom (first section is section 1).
+        </p>
+        <label for="paTowerStart">Starting PA Value:</label>
+        <input type="number" id="paTowerStart" step="0.001" value="0" />
+
+        <label for="paTowerStep">PA Step per section:</label>
+        <input type="number" id="paTowerStep" step="0.001" value="0.002" />
+
+        <label for="paTowerSection"
+          >Best Section Number (counting from bottom):</label
+        >
+        <input type="number" id="paTowerSection" min="1" step="1" />
+
+        <button onclick="calculateTowerPA()">Calculate PA Value</button>
+        <div class="result" id="towerPAResult">
+          The calculated PA value will appear here
+        </div>
+      </div>
+
+      <div id="patternMethodCalc" class="calculator" style="display: none">
+        <h3>Pattern Method</h3>
+        <p>
+          Follow the instructions in the OrcaSlicer guide to analyze your
+          pattern test and find the optimal value.
+        </p>
+        <p>
+          For detailed instructions, refer to Ellis' Print Tuning Guide as
+          mentioned in the OrcaSlicer documentation.
+        </p>
+      </div>
+    </div>
+
+    <div id="tempTower" class="tabcontent">
+      <h2>Temperature Tower Calibration</h2>
+      <p>
+        After printing a temperature tower, identify the section with the best
+        overall quality. Look for:
+      </p>
+      <ul>
+        <li>Minimal stringing</li>
+        <li>Good layer adhesion</li>
+        <li>Minimal warping (overhang)</li>
+        <li>Good bridging performance</li>
+      </ul>
+      <p>
+        Each section of your temperature tower is printed at a different
+        temperature. The temperature for each section should be labeled or can
+        be calculated based on your starting temperature and temperature step.
+      </p>
+
+      <div class="calculator">
+        <label for="tempDirection">Temperature Direction:</label>
+        <select id="tempDirection" onchange="updateTempCalculator()">
+          <option value="decreasing">
+            Highest Temperature at Bottom (Default)
+          </option>
+          <option value="increasing">Lowest Temperature at Bottom</option>
+        </select>
+
+        <div id="decreasingTempCalc">
+          <label for="maxTemp">Maximum Temperature (°C):</label>
+          <input type="number" id="maxTemp" value="220" min="60" max="440" />
+
+          <label for="tempStep">Temperature Step (°C):</label>
+          <input type="number" id="tempStep" value="5" min="0" />
+
+          <label for="sectionNumber"
+            >Best Section Number (counting from bottom):</label
+          >
+          <input type="number" id="sectionNumber" min="1" step="1" />
+
+          <button onclick="calculateOptimalTemp()">
+            Calculate Optimal Temperature
+          </button>
+          <div class="result" id="tempResult">
+            The optimal temperature will appear here
+          </div>
+        </div>
+
+        <div id="increasingTempCalc" style="display: none">
+          <label for="minTemp">Minimum Temperature (°C):</label>
+          <input type="number" id="minTemp" value="180" min="60" max="440" />
+
+          <label for="tempStepInc">Temperature Step (°C):</label>
+          <input type="number" id="tempStepInc" value="5" min="0" />
+
+          <label for="sectionNumberInc"
+            >Best Section Number (counting from bottom):</label
+          >
+          <input type="number" id="sectionNumberInc" min="1" step="1" />
+
+          <button onclick="calculateOptimalTempInc()">
+            Calculate Optimal Temperature
+          </button>
+          <div class="result" id="tempResultInc">
+            The optimal temperature will appear here
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="retraction" class="tabcontent">
+      <h2>Retraction Test Calibration</h2>
+      <p>
+        After printing the retraction test tower, find the section with minimal
+        stringing and note its position from the bottom (first section is
+        section 1).
+      </p>
+
+      <div class="calculator">
+        <label for="retractionStart">Start Retraction Value (mm):</label>
+        <input
+          type="number"
+          id="retractionStart"
+          step="0.1"
+          value="0"
+          min="0"
+        />
+
+        <label for="retractionStep">Retraction Step (mm):</label>
+        <input
+          type="number"
+          id="retractionStep"
+          step="0.01"
+          value="0.1"
+          min="0"
+        />
+
+        <label for="retractionSection"
+          >Best Section Number (counting from bottom):</label
+        >
+        <input type="number" id="retractionSection" min="1" step="1" />
+
+        <button onclick="calculateRetraction()">
+          Calculate Optimal Retraction
+        </button>
+        <div class="result" id="retractionResult">
+          The optimal retraction distance will appear here
+        </div>
+      </div>
+    </div>
+
+    <div id="inputShaping" class="tabcontent">
+      <h2>Input Shaping Calibration</h2>
+
+      <h3>Select Firmware</h3>
+      <select id="firmwareType" onchange="updateInputShapingCalc()">
+        <option value="klipper">Klipper</option>
+        <option value="marlin">Marlin</option>
+      </select>
+
+      <div id="klipperCalc" class="calculator">
+        <h3>Klipper Resonance Compensation</h3>
+
+        <h4>Frequency Test</h4>
+        <label for="klipperXHeight">Measured X Height (mm):</label>
+        <input type="number" id="klipperXHeight" step="0.1" />
+
+        <label for="klipperYHeight">Measured Y Height (mm):</label>
+        <input type="number" id="klipperYHeight" step="0.1" />
+
+        <label for="klipperFreqStart">Starting Frequency (Hz):</label>
+        <input type="number" id="klipperFreqStart" value="20" />
+
+        <label for="klipperFreqStep">Frequency Step per mm (Hz/mm):</label>
+        <input type="number" id="klipperFreqStep" value="1" />
+
+        <button onclick="calculateKlipperFreq()">Calculate Frequencies</button>
+        <div class="result" id="klipperFreqResult">
+          The calculated frequencies will appear here
+        </div>
+
+        <h4>Damping Test</h4>
+        <label for="klipperXDampHeight">Measured X Damping Height (mm):</label>
+        <input type="number" id="klipperXDampHeight" step="0.1" />
+
+        <label for="klipperYDampHeight">Measured Y Damping Height (mm):</label>
+        <input type="number" id="klipperYDampHeight" step="0.1" />
+
+        <label for="klipperDampStart">Starting Damping:</label>
+        <input type="number" id="klipperDampStart" value="0.05" step="0.01" />
+
+        <label for="klipperDampStep">Damping Step per mm:</label>
+        <input type="number" id="klipperDampStep" value="0.01" step="0.001" />
+
+        <button onclick="calculateKlipperDamp()">
+          Calculate Damping Values
+        </button>
+        <div class="result" id="klipperDampResult">
+          The calculated damping values will appear here
+        </div>
+      </div>
+
+      <div id="marlinCalc" class="calculator" style="display: none">
+        <h3>Marlin Input Shaping</h3>
+
+        <h4>Select Method</h4>
+        <select id="marlinMethod" onchange="updateMarlinCalc()">
+          <option value="zv">ZV Input Shaping</option>
+          <option value="junction">Junction Deviation</option>
+        </select>
+
+        <div id="zvCalc">
+          <h4>ZV Input Shaping Frequency Test</h4>
+          <label for="marlinXHeight">Measured X Height (mm):</label>
+          <input type="number" id="marlinXHeight" step="0.1" />
+
+          <label for="marlinYHeight">Measured Y Height (mm):</label>
+          <input type="number" id="marlinYHeight" step="0.1" />
+
+          <label for="marlinFreqStart">Starting Frequency (Hz):</label>
+          <input type="number" id="marlinFreqStart" value="20" />
+
+          <label for="marlinFreqStep">Frequency Step per mm (Hz/mm):</label>
+          <input type="number" id="marlinFreqStep" value="1" />
+
+          <button onclick="calculateMarlinFreq()">Calculate Frequencies</button>
+          <div class="result" id="marlinFreqResult">
+            The calculated frequencies will appear here
+          </div>
+
+          <h4>Damping Test</h4>
+          <label for="marlinXDampHeight">Measured X Damping Height (mm):</label>
+          <input type="number" id="marlinXDampHeight" step="0.1" />
+
+          <label for="marlinYDampHeight">Measured Y Damping Height (mm):</label>
+          <input type="number" id="marlinYDampHeight" step="0.1" />
+
+          <label for="marlinDampStart">Starting Damping:</label>
+          <input type="number" id="marlinDampStart" value="0.05" step="0.01" />
+
+          <label for="marlinDampStep">Damping Step per mm:</label>
+          <input type="number" id="marlinDampStep" value="0.01" step="0.001" />
+
+          <button onclick="calculateMarlinDamp()">
+            Calculate Damping Values
+          </button>
+          <div class="result" id="marlinDampResult">
+            The calculated damping values will appear here
+          </div>
+        </div>
+
+        <div id="junctionCalc" style="display: none">
+          <h4>Junction Deviation Test</h4>
+          <label for="jdXHeight">Measured X Height (mm):</label>
+          <input type="number" id="jdXHeight" step="0.1" />
+
+          <label for="jdYHeight">Measured Y Height (mm):</label>
+          <input type="number" id="jdYHeight" step="0.1" />
+
+          <label for="jdStart">Starting Junction Deviation (mm):</label>
+          <input type="number" id="jdStart" value="0.25" step="0.01" />
+
+          <label for="jdStep">Junction Deviation Step per mm:</label>
+          <input type="number" id="jdStep" value="-0.01" step="0.001" />
+
+          <button onclick="calculateJunctionDeviation()">
+            Calculate Junction Deviation
+          </button>
+          <div class="result" id="jdResult">
+            The calculated junction deviation values will appear here
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="esteps" class="tabcontent">
+      <h2>E-steps/Rotation Distance Calculator</h2>
+      <p>
+        Calculate your extruder's steps per mm (Marlin) or rotation distance
+        (Klipper) based on your calibration measurements.
+      </p>
+
+      <div class="calculator">
+        <h3>Select Method</h3>
+        <select id="estepsMethod" onchange="updateEstepsCalculator()">
+          <option value="esteps">E-steps (Marlin)</option>
+          <option value="rotation">Rotation Distance (Klipper)</option>
+        </select>
+
+        <div id="estepsCalc">
+          <h3>E-steps Calculator</h3>
+          <label for="currentEsteps">Current Steps/mm:</label>
+          <input type="number" id="currentEsteps" step="0.01" min="0" />
+
+          <label for="requestedDistance"
+            >Requested Extrusion Distance (mm):</label
+          >
+          <input type="number" id="requestedDistance" step="0.1" min="0" />
+
+          <label for="measuredDistance">Measured Distance (mm):</label>
+          <input type="number" id="measuredDistance" step="0.1" min="0" />
+
+          <button onclick="calculateEsteps()">Calculate New Steps/mm</button>
+          <div class="result" id="estepsResult">
+            The calculated steps/mm will appear here
+          </div>
+        </div>
+
+        <div id="rotationCalc" style="display: none">
+          <h3>Rotation Distance Calculator</h3>
+          <select id="rotationType" onchange="updateRotationCalculator()">
+            <option value="simple">Simple Calculator</option>
+            <option value="esteps">E-steps to Rotation Distance</option>
+            <option value="belt">Belt Driven Axes</option>
+            <option value="leadscrew">Lead Screw Axis</option>
+            <option value="transmission">Transmission</option>
+          </select>
+
+          <div id="simpleRotationCalc">
+            <label for="currentRotation">Current Rotation Distance:</label>
+            <input type="number" id="currentRotation" step="0.0001" min="0" />
+
+            <label for="rotRequestedDistance"
+              >Requested Extrusion Distance (mm):</label
+            >
+            <input type="number" id="rotRequestedDistance" step="0.1" min="0" />
+
+            <label for="rotMeasuredDistance">Measured Distance (mm):</label>
+            <input type="number" id="rotMeasuredDistance" step="0.1" min="0" />
+
+            <button onclick="calculateSimpleRotation()">
+              Calculate New Rotation Distance
+            </button>
+            <div class="result" id="simpleRotationResult">
+              The calculated rotation distance will appear here
+            </div>
+          </div>
+
+          <div id="estepsToRotationCalc" style="display: none">
+            <h4>Convert between E-steps and Rotation Distance</h4>
+            <label for="estepsConfigType">Select Klipper Config Type:</label>
+            <select
+              id="estepsConfigType"
+              onchange="updateEstepsToRotationFields()"
+            >
+              <option value="new">New Klipper Config</option>
+              <option value="old">Old Klipper Config</option>
+            </select>
+
+            <div id="newConfigFields">
+              <label for="stepsPerMm">Steps per mm:</label>
+              <input type="number" id="stepsPerMm" step="0.01" min="0" />
+              <label for="fullSteps">Full Steps per Rotation:</label>
+              <input type="number" id="fullSteps" value="200" min="0" />
+              <label for="microsteps">Microsteps:</label>
+              <input type="number" id="microsteps" value="16" min="0" />
+            </div>
+
+            <div id="oldConfigFields" style="display: none">
+              <label for="stepDistance">Step Distance:</label>
+              <input type="number" id="stepDistance" step="0.0001" min="0" />
+              <label for="oldFullSteps">Full Steps per Rotation:</label>
+              <input type="number" id="oldFullSteps" value="200" min="0" />
+              <label for="oldMicrosteps">Microsteps:</label>
+              <input type="number" id="oldMicrosteps" value="16" min="0" />
+            </div>
+
+            <button onclick="calculateEstepsToRotation()">
+              Calculate Rotation Distance
+            </button>
+            <div class="result" id="estepsToRotationResult">
+              The calculated rotation distance will appear here
+            </div>
+          </div>
+
+          <div id="beltRotationCalc" style="display: none">
+            <label for="beltPitch">Belt Pitch (mm):</label>
+            <input type="number" id="beltPitch" step="0.1" min="0" />
+
+            <label for="pulleyTeeth">Number of Teeth on Pulley:</label>
+            <input type="number" id="pulleyTeeth" min="0" />
+
+            <button onclick="calculateBeltRotation()">
+              Calculate Rotation Distance
+            </button>
+            <div class="result" id="beltRotationResult">
+              The calculated rotation distance will appear here
+            </div>
+          </div>
+
+          <div id="leadscrewRotationCalc" style="display: none">
+            <label for="screwPitch">Screw Pitch (mm):</label>
+            <input type="number" id="screwPitch" step="0.1" min="0" />
+
+            <label for="threadCount">Number of Separate Threads:</label>
+            <input type="number" id="threadCount" min="0" />
+
+            <button onclick="calculateLeadscrewRotation()">
+              Calculate Rotation Distance
+            </button>
+            <div class="result" id="leadscrewRotationResult">
+              The calculated rotation distance will appear here
+            </div>
+          </div>
+
+          <div id="transmissionRotationCalc" style="display: none">
+            <label for="transmissionRatio"
+              >Transmission Ratio (format: a:b:c or a:b):</label
+            >
+            <input
+              type="text"
+              id="transmissionRatio"
+              placeholder="e.g., 9:5:1 or 9.54647:1"
+            />
+
+            <label for="baseRotation">Base Rotation Distance:</label>
+            <input type="number" id="baseRotation" step="0.0001" min="0" />
+
+            <button onclick="calculateTransmissionRotation()">
+              Calculate Rotation Distance
+            </button>
+            <div class="result" id="transmissionRotationResult">
+              The calculated rotation distance will appear here
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Tab functionality
+      function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+          tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+          tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+
+        if (tabName === "esteps") {
+          document.getElementById("estepsToRotationCalc").style.display =
+            "block";
+        }
+      }
+
+      // Flow Rate Calculator
+      function updateFlowCalculator() {
+        const method = document.getElementById("flowMethod").value;
+
+        document.getElementById("passMethodCalc").style.display = "none";
+        document.getElementById("yoloMethodCalc").style.display = "none";
+
+        if (method === "pass") {
+          document.getElementById("passMethodCalc").style.display = "block";
+        } else {
+          document.getElementById("yoloMethodCalc").style.display = "block";
+        }
+      }
+
+      function calculateFlowRate() {
+        const oldFlowRatio = document.getElementById("oldFlowRatio").value;
+        const flowRateModifier =
+          document.getElementById("flowRateModifier").value;
+
+        // Check for empty fields
+        if (oldFlowRatio === "" || flowRateModifier === "") {
+          let emptyFields = [];
+          if (oldFlowRatio === "") emptyFields.push("Current Flow Ratio");
+          if (flowRateModifier === "") emptyFields.push("Flow Rate Modifier");
+          document.getElementById(
+            "flowRateResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const oldFlowRatioNum = parseFloat(oldFlowRatio);
+        const flowRateModifierNum = parseFloat(flowRateModifier);
+
+        if (isNaN(oldFlowRatioNum) || isNaN(flowRateModifierNum)) {
+          document.getElementById("flowRateResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        // Pass 1 uses the old formula: FlowRatio_old*(100 + modifier)/100
+        // Convert modifier to percentage first
+        const modifierPercent = flowRateModifierNum * 100;
+        const newFlowRatio = (oldFlowRatioNum * (100 + modifierPercent)) / 100;
+        document.getElementById(
+          "flowRateResult"
+        ).textContent = `New Flow Ratio: ${newFlowRatio.toFixed(5)}`;
+
+        // Auto-fill the Pass 2 current flow ratio
+        document.getElementById("pass2FlowRatio").value =
+          newFlowRatio.toFixed(5);
+      }
+
+      function calculatePass2FlowRate() {
+        const pass2FlowRatio = document.getElementById("pass2FlowRatio").value;
+        const pass2Modifier = document.getElementById("pass2Modifier").value;
+
+        // Check for empty fields
+        if (pass2FlowRatio === "" || pass2Modifier === "") {
+          let emptyFields = [];
+          if (pass2FlowRatio === "") emptyFields.push("Current Flow Ratio");
+          if (pass2Modifier === "") emptyFields.push("Flow Rate Modifier");
+          document.getElementById(
+            "pass2Result"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const pass2FlowRatioNum = parseFloat(pass2FlowRatio);
+        const pass2ModifierNum = parseFloat(pass2Modifier);
+
+        if (isNaN(pass2FlowRatioNum) || isNaN(pass2ModifierNum)) {
+          document.getElementById("pass2Result").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        // Pass 2 also uses the old formula: FlowRatio_old*(100 + modifier)/100
+        // Convert modifier to percentage first
+        const modifierPercent = pass2ModifierNum * 100;
+        const finalFlowRatio =
+          (pass2FlowRatioNum * (100 + modifierPercent)) / 100;
+        document.getElementById(
+          "pass2Result"
+        ).textContent = `Final Flow Ratio: ${finalFlowRatio.toFixed(5)}`;
+      }
+
+      function calculateYoloFlowRate() {
+        const yoloFlowRatio = document.getElementById("yoloFlowRatio").value;
+        const yoloModifier = document.getElementById("yoloModifier").value;
+
+        // Check for empty fields
+        if (yoloFlowRatio === "" || yoloModifier === "") {
+          let emptyFields = [];
+          if (yoloFlowRatio === "") emptyFields.push("Current Flow Ratio");
+          if (yoloModifier === "") emptyFields.push("Flow Rate Modifier");
+          document.getElementById(
+            "yoloResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const yoloFlowRatioNum = parseFloat(yoloFlowRatio);
+        const yoloModifierNum = parseFloat(yoloModifier);
+
+        if (isNaN(yoloFlowRatioNum) || isNaN(yoloModifierNum)) {
+          document.getElementById("yoloResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        // YOLO method uses simple addition/subtraction: FlowRatio_old±modifier
+        const newFlowRatio = yoloFlowRatioNum + yoloModifierNum;
+        document.getElementById(
+          "yoloResult"
+        ).textContent = `New Flow Ratio: ${newFlowRatio.toFixed(5)}`;
+      }
+
+      // Pressure Advance Calculator
+      function updatePACalculator() {
+        const method = document.getElementById("paMethod").value;
+
+        document.getElementById("lineMethodCalc").style.display = "none";
+        document.getElementById("towerMethodCalc").style.display = "none";
+        document.getElementById("patternMethodCalc").style.display = "none";
+
+        if (method === "line") {
+          document.getElementById("lineMethodCalc").style.display = "block";
+        } else if (method === "tower") {
+          document.getElementById("towerMethodCalc").style.display = "block";
+        } else if (method === "pattern") {
+          document.getElementById("patternMethodCalc").style.display = "block";
+        }
+      }
+
+      function calculateLinePA() {
+        const paStart = document.getElementById("paStart").value;
+        const paStep = document.getElementById("paStep").value;
+        const paLineNumber = document.getElementById("paLineNumber").value;
+
+        // Check for empty fields
+        if (paStart === "" || paStep === "" || paLineNumber === "") {
+          let emptyFields = [];
+          if (paStart === "") emptyFields.push("Starting PA Value");
+          if (paStep === "") emptyFields.push("PA Step");
+          if (paLineNumber === "") emptyFields.push("Line Number");
+          document.getElementById(
+            "linePAResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const paStartNum = parseFloat(paStart);
+        const paStepNum = parseFloat(paStep);
+        const paLineNumberNum = parseInt(paLineNumber);
+
+        if (
+          isNaN(paStartNum) ||
+          isNaN(paStepNum) ||
+          isNaN(paLineNumberNum) ||
+          paLineNumberNum < 1
+        ) {
+          document.getElementById("linePAResult").textContent =
+            "Please enter valid numbers and a line number greater than 0";
+          return;
+        }
+
+        const paValue = paStartNum + (paLineNumberNum - 1) * paStepNum;
+        document.getElementById(
+          "linePAResult"
+        ).textContent = `Optimal PA Value: ${paValue.toFixed(4)}`;
+      }
+
+      function calculateTowerPA() {
+        const paTowerStart = document.getElementById("paTowerStart").value;
+        const paTowerStep = document.getElementById("paTowerStep").value;
+        const paTowerSection = document.getElementById("paTowerSection").value;
+
+        // Check for empty fields
+        if (
+          paTowerStart === "" ||
+          paTowerStep === "" ||
+          paTowerSection === ""
+        ) {
+          let emptyFields = [];
+          if (paTowerStart === "") emptyFields.push("Starting PA Value");
+          if (paTowerStep === "") emptyFields.push("PA Step");
+          if (paTowerSection === "") emptyFields.push("Section Number");
+          document.getElementById(
+            "towerPAResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const paTowerStartNum = parseFloat(paTowerStart);
+        const paTowerStepNum = parseFloat(paTowerStep);
+        const paTowerSectionNum = parseInt(paTowerSection);
+
+        if (
+          isNaN(paTowerStartNum) ||
+          isNaN(paTowerStepNum) ||
+          isNaN(paTowerSectionNum) ||
+          paTowerSectionNum < 1
+        ) {
+          document.getElementById("towerPAResult").textContent =
+            "Please enter valid numbers and a section number greater than 0";
+          return;
+        }
+
+        const paValue =
+          paTowerStartNum + (paTowerSectionNum - 1) * paTowerStepNum;
+        document.getElementById(
+          "towerPAResult"
+        ).textContent = `Optimal PA Value: ${paValue.toFixed(4)}`;
+      }
+
+      // Temperature Tower Calculator
+      function updateTempCalculator() {
+        const direction = document.getElementById("tempDirection").value;
+
+        document.getElementById("decreasingTempCalc").style.display = "none";
+        document.getElementById("increasingTempCalc").style.display = "none";
+
+        if (direction === "decreasing") {
+          document.getElementById("decreasingTempCalc").style.display = "block";
+        } else {
+          document.getElementById("increasingTempCalc").style.display = "block";
+        }
+      }
+
+      function calculateOptimalTemp() {
+        const maxTemp = document.getElementById("maxTemp").value;
+        const tempStep = document.getElementById("tempStep").value;
+        const sectionNumber = document.getElementById("sectionNumber").value;
+
+        // Check for empty fields
+        if (maxTemp === "" || tempStep === "" || sectionNumber === "") {
+          let emptyFields = [];
+          if (maxTemp === "") emptyFields.push("Maximum Temperature");
+          if (tempStep === "") emptyFields.push("Temperature Step");
+          if (sectionNumber === "") emptyFields.push("Section Number");
+          document.getElementById(
+            "tempResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const maxTempNum = parseFloat(maxTemp);
+        const tempStepNum = parseFloat(tempStep);
+        const sectionNumberNum = parseInt(sectionNumber);
+
+        if (
+          isNaN(maxTempNum) ||
+          isNaN(tempStepNum) ||
+          isNaN(sectionNumberNum) ||
+          tempStepNum < 0 ||
+          sectionNumberNum < 1
+        ) {
+          document.getElementById("tempResult").textContent =
+            "Please enter valid numbers: positive step and section number > 0";
+          return;
+        }
+
+        if (maxTempNum <= 60 || maxTempNum > 440) {
+          document.getElementById("tempResult").textContent =
+            "Please enter a maximum temperature between 60°C and 440°C";
+          return;
+        }
+
+        // For decreasing temperature (max at bottom), subtract the step for each section
+        const optimalTemp = maxTempNum - (sectionNumberNum - 1) * tempStepNum;
+        document.getElementById(
+          "tempResult"
+        ).textContent = `Optimal Temperature: ${optimalTemp}°C`;
+      }
+
+      function calculateOptimalTempInc() {
+        const minTemp = document.getElementById("minTemp").value;
+        const tempStep = document.getElementById("tempStepInc").value;
+        const sectionNumber = document.getElementById("sectionNumberInc").value;
+
+        // Check for empty fields
+        if (minTemp === "" || tempStep === "" || sectionNumber === "") {
+          let emptyFields = [];
+          if (minTemp === "") emptyFields.push("Minimum Temperature");
+          if (tempStep === "") emptyFields.push("Temperature Step");
+          if (sectionNumber === "") emptyFields.push("Section Number");
+          document.getElementById(
+            "tempResultInc"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const minTempNum = parseFloat(minTemp);
+        const tempStepNum = parseFloat(tempStep);
+        const sectionNumberNum = parseInt(sectionNumber);
+
+        if (
+          isNaN(minTempNum) ||
+          isNaN(tempStepNum) ||
+          isNaN(sectionNumberNum) ||
+          tempStepNum < 0 ||
+          sectionNumberNum < 1
+        ) {
+          document.getElementById("tempResultInc").textContent =
+            "Please enter valid numbers: positive step and section number > 0";
+          return;
+        }
+
+        if (minTempNum < 60 || minTempNum >= 440) {
+          document.getElementById("tempResultInc").textContent =
+            "Please enter a minimum temperature between 60°C and 440°C";
+          return;
+        }
+
+        // For increasing temperature (min at bottom), add the step for each section
+        const optimalTemp = minTempNum + (sectionNumberNum - 1) * tempStepNum;
+        document.getElementById(
+          "tempResultInc"
+        ).textContent = `Optimal Temperature: ${optimalTemp}°C`;
+      }
+
+      // Retraction Calculator
+      function calculateRetraction() {
+        const retractionStart =
+          document.getElementById("retractionStart").value;
+        const retractionStep = document.getElementById("retractionStep").value;
+        const retractionSection =
+          document.getElementById("retractionSection").value;
+
+        // Check for empty fields
+        if (
+          retractionStart === "" ||
+          retractionStep === "" ||
+          retractionSection === ""
+        ) {
+          let emptyFields = [];
+          if (retractionStart === "")
+            emptyFields.push("Start Retraction Value");
+          if (retractionStep === "") emptyFields.push("Retraction Step");
+          if (retractionSection === "") emptyFields.push("Section Number");
+          document.getElementById(
+            "retractionResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const retractionStartNum = parseFloat(retractionStart);
+        const retractionStepNum = parseFloat(retractionStep);
+        const retractionSectionNum = parseInt(retractionSection);
+
+        if (
+          isNaN(retractionStartNum) ||
+          isNaN(retractionStepNum) ||
+          isNaN(retractionSectionNum) ||
+          retractionStartNum < 0 ||
+          retractionStepNum < 0 ||
+          retractionSectionNum < 1
+        ) {
+          document.getElementById("retractionResult").textContent =
+            "Please enter valid positive numbers and a section number greater than 0";
+          return;
+        }
+
+        const optimalRetraction =
+          retractionStartNum + (retractionSectionNum - 1) * retractionStepNum;
+        document.getElementById(
+          "retractionResult"
+        ).textContent = `Optimal Retraction Distance: ${optimalRetraction.toFixed(
+          2
+        )} mm`;
+      }
+
+      // Input Shaping Calculator
+      function updateInputShapingCalc() {
+        const firmware = document.getElementById("firmwareType").value;
+
+        document.getElementById("klipperCalc").style.display = "none";
+        document.getElementById("marlinCalc").style.display = "none";
+
+        if (firmware === "klipper") {
+          document.getElementById("klipperCalc").style.display = "block";
+        } else if (firmware === "marlin") {
+          document.getElementById("marlinCalc").style.display = "block";
+          updateMarlinCalc();
+        }
+      }
+
+      function updateMarlinCalc() {
+        const method = document.getElementById("marlinMethod").value;
+
+        document.getElementById("zvCalc").style.display = "none";
+        document.getElementById("junctionCalc").style.display = "none";
+
+        if (method === "zv") {
+          document.getElementById("zvCalc").style.display = "block";
+        } else if (method === "junction") {
+          document.getElementById("junctionCalc").style.display = "block";
+        }
+      }
+
+      function calculateKlipperFreq() {
+        const xHeight = document.getElementById("klipperXHeight").value;
+        const yHeight = document.getElementById("klipperYHeight").value;
+        const freqStart = document.getElementById("klipperFreqStart").value;
+        const freqStep = document.getElementById("klipperFreqStep").value;
+
+        // Check for empty fields
+        if (
+          xHeight === "" ||
+          yHeight === "" ||
+          freqStart === "" ||
+          freqStep === ""
+        ) {
+          let emptyFields = [];
+          if (xHeight === "") emptyFields.push("X Height");
+          if (yHeight === "") emptyFields.push("Y Height");
+          if (freqStart === "") emptyFields.push("Starting Frequency");
+          if (freqStep === "") emptyFields.push("Frequency Step");
+          document.getElementById(
+            "klipperFreqResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const xHeightNum = parseFloat(xHeight);
+        const yHeightNum = parseFloat(yHeight);
+        const freqStartNum = parseFloat(freqStart);
+        const freqStepNum = parseFloat(freqStep);
+
+        if (
+          isNaN(xHeightNum) ||
+          isNaN(yHeightNum) ||
+          isNaN(freqStartNum) ||
+          isNaN(freqStepNum)
+        ) {
+          document.getElementById("klipperFreqResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        const xFreq = freqStartNum + xHeightNum * freqStepNum;
+        const yFreq = freqStartNum + yHeightNum * freqStepNum;
+
+        document.getElementById(
+          "klipperFreqResult"
+        ).textContent = `X Axis Frequency: ${xFreq.toFixed(
+          2
+        )} Hz, Y Axis Frequency: ${yFreq.toFixed(2)} Hz`;
+      }
+
+      function calculateKlipperDamp() {
+        const xHeight = document.getElementById("klipperXDampHeight").value;
+        const yHeight = document.getElementById("klipperYDampHeight").value;
+        const dampStart = document.getElementById("klipperDampStart").value;
+        const dampStep = document.getElementById("klipperDampStep").value;
+
+        // Check for empty fields
+        if (
+          xHeight === "" ||
+          yHeight === "" ||
+          dampStart === "" ||
+          dampStep === ""
+        ) {
+          let emptyFields = [];
+          if (xHeight === "") emptyFields.push("X Damping Height");
+          if (yHeight === "") emptyFields.push("Y Damping Height");
+          if (dampStart === "") emptyFields.push("Starting Damping");
+          if (dampStep === "") emptyFields.push("Damping Step");
+          document.getElementById(
+            "klipperDampResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const xHeightNum = parseFloat(xHeight);
+        const yHeightNum = parseFloat(yHeight);
+        const dampStartNum = parseFloat(dampStart);
+        const dampStepNum = parseFloat(dampStep);
+
+        if (
+          isNaN(xHeightNum) ||
+          isNaN(yHeightNum) ||
+          isNaN(dampStartNum) ||
+          isNaN(dampStepNum)
+        ) {
+          document.getElementById("klipperDampResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        const xDamp = dampStartNum + xHeightNum * dampStepNum;
+        const yDamp = dampStartNum + yHeightNum * dampStepNum;
+
+        document.getElementById(
+          "klipperDampResult"
+        ).textContent = `X Axis Damping: ${xDamp.toFixed(
+          3
+        )}, Y Axis Damping: ${yDamp.toFixed(3)}`;
+      }
+
+      function calculateMarlinFreq() {
+        const xHeight = document.getElementById("marlinXHeight").value;
+        const yHeight = document.getElementById("marlinYHeight").value;
+        const freqStart = document.getElementById("marlinFreqStart").value;
+        const freqStep = document.getElementById("marlinFreqStep").value;
+
+        // Check for empty fields
+        if (
+          xHeight === "" ||
+          yHeight === "" ||
+          freqStart === "" ||
+          freqStep === ""
+        ) {
+          let emptyFields = [];
+          if (xHeight === "") emptyFields.push("X Height");
+          if (yHeight === "") emptyFields.push("Y Height");
+          if (freqStart === "") emptyFields.push("Starting Frequency");
+          if (freqStep === "") emptyFields.push("Frequency Step");
+          document.getElementById(
+            "marlinFreqResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const xHeightNum = parseFloat(xHeight);
+        const yHeightNum = parseFloat(yHeight);
+        const freqStartNum = parseFloat(freqStart);
+        const freqStepNum = parseFloat(freqStep);
+
+        if (
+          isNaN(xHeightNum) ||
+          isNaN(yHeightNum) ||
+          isNaN(freqStartNum) ||
+          isNaN(freqStepNum)
+        ) {
+          document.getElementById("marlinFreqResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        const xFreq = freqStartNum + xHeightNum * freqStepNum;
+        const yFreq = freqStartNum + yHeightNum * freqStepNum;
+
+        document.getElementById(
+          "marlinFreqResult"
+        ).textContent = `X Axis Frequency: ${xFreq.toFixed(
+          2
+        )} Hz, Y Axis Frequency: ${yFreq.toFixed(2)} Hz`;
+      }
+
+      function calculateMarlinDamp() {
+        const xHeight = document.getElementById("marlinXDampHeight").value;
+        const yHeight = document.getElementById("marlinYDampHeight").value;
+        const dampStart = document.getElementById("marlinDampStart").value;
+        const dampStep = document.getElementById("marlinDampStep").value;
+
+        // Check for empty fields
+        if (
+          xHeight === "" ||
+          yHeight === "" ||
+          dampStart === "" ||
+          dampStep === ""
+        ) {
+          let emptyFields = [];
+          if (xHeight === "") emptyFields.push("X Damping Height");
+          if (yHeight === "") emptyFields.push("Y Damping Height");
+          if (dampStart === "") emptyFields.push("Starting Damping");
+          if (dampStep === "") emptyFields.push("Damping Step");
+          document.getElementById(
+            "marlinDampResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const xHeightNum = parseFloat(xHeight);
+        const yHeightNum = parseFloat(yHeight);
+        const dampStartNum = parseFloat(dampStart);
+        const dampStepNum = parseFloat(dampStep);
+
+        if (
+          isNaN(xHeightNum) ||
+          isNaN(yHeightNum) ||
+          isNaN(dampStartNum) ||
+          isNaN(dampStepNum)
+        ) {
+          document.getElementById("marlinDampResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        const xDamp = dampStartNum + xHeightNum * dampStepNum;
+        const yDamp = dampStartNum + yHeightNum * dampStepNum;
+
+        document.getElementById(
+          "marlinDampResult"
+        ).textContent = `X Axis Damping: ${xDamp.toFixed(
+          3
+        )}, Y Axis Damping: ${yDamp.toFixed(3)}`;
+      }
+
+      function calculateJunctionDeviation() {
+        const xHeight = document.getElementById("jdXHeight").value;
+        const yHeight = document.getElementById("jdYHeight").value;
+        const jdStart = document.getElementById("jdStart").value;
+        const jdStep = document.getElementById("jdStep").value;
+
+        // Check for empty fields
+        if (
+          xHeight === "" ||
+          yHeight === "" ||
+          jdStart === "" ||
+          jdStep === ""
+        ) {
+          let emptyFields = [];
+          if (xHeight === "") emptyFields.push("X Height");
+          if (yHeight === "") emptyFields.push("Y Height");
+          if (jdStart === "") emptyFields.push("Starting Junction Deviation");
+          if (jdStep === "") emptyFields.push("Junction Deviation Step");
+          document.getElementById(
+            "jdResult"
+          ).textContent = `Please fill in the following required fields: ${emptyFields.join(
+            ", "
+          )}`;
+          return;
+        }
+
+        const xHeightNum = parseFloat(xHeight);
+        const yHeightNum = parseFloat(yHeight);
+        const jdStartNum = parseFloat(jdStart);
+        const jdStepNum = parseFloat(jdStep);
+
+        if (
+          isNaN(xHeightNum) ||
+          isNaN(yHeightNum) ||
+          isNaN(jdStartNum) ||
+          isNaN(jdStepNum)
+        ) {
+          document.getElementById("jdResult").textContent =
+            "Please enter valid numbers for all fields";
+          return;
+        }
+
+        const xJd = jdStartNum + xHeightNum * jdStepNum;
+        const yJd = jdStartNum + yHeightNum * jdStepNum;
+
+        document.getElementById(
+          "jdResult"
+        ).textContent = `X Axis Junction Deviation: ${xJd.toFixed(
+          3
+        )} mm, Y Axis Junction Deviation: ${yJd.toFixed(3)} mm`;
+      }
+
+      // E-steps/Rotation Distance Calculator
+      function updateEstepsCalculator() {
+        const method = document.getElementById("estepsMethod").value;
+        document.getElementById("estepsCalc").style.display =
+          method === "esteps" ? "block" : "none";
+        document.getElementById("rotationCalc").style.display =
+          method === "rotation" ? "block" : "none";
+
+        // Ensure the right rotation calculator is displayed when switching tabs
+        if (method === "rotation") {
+          updateRotationCalculator();
+        }
+      }
+
+      function updateRotationCalculator() {
+        const rotationType = document.getElementById("rotationType").value;
+
+        // Hide all rotation calculator types
+        document.getElementById("simpleRotationCalc").style.display = "none";
+        document.getElementById("estepsToRotationCalc").style.display = "none";
+        document.getElementById("beltRotationCalc").style.display = "none";
+        document.getElementById("leadscrewRotationCalc").style.display = "none";
+        document.getElementById("transmissionRotationCalc").style.display =
+          "none";
+
+        // Show the selected calculator
+        if (rotationType === "simple") {
+          document.getElementById("simpleRotationCalc").style.display = "block";
+        } else if (rotationType === "esteps") {
+          document.getElementById("estepsToRotationCalc").style.display =
+            "block";
+          updateEstepsToRotationFields();
+        } else if (rotationType === "belt") {
+          document.getElementById("beltRotationCalc").style.display = "block";
+        } else if (rotationType === "leadscrew") {
+          document.getElementById("leadscrewRotationCalc").style.display =
+            "block";
+        } else if (rotationType === "transmission") {
+          document.getElementById("transmissionRotationCalc").style.display =
+            "block";
+        }
+      }
+
+      function updateEstepsToRotationFields() {
+        const configType = document.getElementById("estepsConfigType").value;
+
+        // Ensure both fields exist before trying to change their display
+        const newConfigFields = document.getElementById("newConfigFields");
+        const oldConfigFields = document.getElementById("oldConfigFields");
+
+        if (newConfigFields && oldConfigFields) {
+          newConfigFields.style.display =
+            configType === "new" ? "block" : "none";
+          oldConfigFields.style.display =
+            configType === "old" ? "block" : "none";
+        }
+      }
+
+      function calculateEsteps() {
+        const currentEsteps = parseFloat(
+          document.getElementById("currentEsteps").value
+        );
+        const requestedDistance = parseFloat(
+          document.getElementById("requestedDistance").value
+        );
+        const measuredDistance = parseFloat(
+          document.getElementById("measuredDistance").value
+        );
+
+        if (
+          isNaN(currentEsteps) ||
+          isNaN(requestedDistance) ||
+          isNaN(measuredDistance) ||
+          currentEsteps <= 0 ||
+          requestedDistance <= 0 ||
+          measuredDistance <= 0
+        ) {
+          document.getElementById("estepsResult").textContent =
+            "Please enter valid positive numbers for all fields";
+          return;
+        }
+
+        const newEsteps =
+          currentEsteps * (requestedDistance / measuredDistance);
+        document.getElementById(
+          "estepsResult"
+        ).textContent = `New Steps/mm: ${newEsteps.toFixed(2)}`;
+      }
+
+      function calculateSimpleRotation() {
+        const currentRotation = parseFloat(
+          document.getElementById("currentRotation").value
+        );
+        const requestedDistance = parseFloat(
+          document.getElementById("rotRequestedDistance").value
+        );
+        const measuredDistance = parseFloat(
+          document.getElementById("rotMeasuredDistance").value
+        );
+
+        if (
+          isNaN(currentRotation) ||
+          isNaN(requestedDistance) ||
+          isNaN(measuredDistance) ||
+          currentRotation <= 0 ||
+          requestedDistance <= 0 ||
+          measuredDistance <= 0
+        ) {
+          document.getElementById("simpleRotationResult").textContent =
+            "Please enter valid positive numbers for all fields";
+          return;
+        }
+
+        const newRotation =
+          currentRotation * (requestedDistance / measuredDistance);
+        document.getElementById(
+          "simpleRotationResult"
+        ).textContent = `New Rotation Distance: ${newRotation.toFixed(4)}`;
+      }
+
+      function calculateEstepsToRotation() {
+        const configType = document.getElementById("estepsConfigType").value;
+        let rotationDistance;
+
+        if (configType === "new") {
+          const stepsPerMm = parseFloat(
+            document.getElementById("stepsPerMm").value
+          );
+          const fullSteps = parseInt(
+            document.getElementById("fullSteps").value
+          );
+          const microsteps = parseInt(
+            document.getElementById("microsteps").value
+          );
+
+          if (
+            isNaN(stepsPerMm) ||
+            isNaN(fullSteps) ||
+            isNaN(microsteps) ||
+            stepsPerMm <= 0 ||
+            fullSteps <= 0 ||
+            microsteps <= 0
+          ) {
+            document.getElementById("estepsToRotationResult").textContent =
+              "Please enter valid positive numbers for all fields";
+            return;
+          }
+
+          // Formula: rotation_distance = (full_steps_per_rotation * microsteps) / steps_per_mm
+          rotationDistance = (fullSteps * microsteps) / stepsPerMm;
+        } else {
+          const stepDistance = parseFloat(
+            document.getElementById("stepDistance").value
+          );
+          const oldFullSteps = parseInt(
+            document.getElementById("oldFullSteps").value
+          );
+          const oldMicrosteps = parseInt(
+            document.getElementById("oldMicrosteps").value
+          );
+
+          if (
+            isNaN(stepDistance) ||
+            isNaN(oldFullSteps) ||
+            isNaN(oldMicrosteps) ||
+            stepDistance <= 0 ||
+            oldFullSteps <= 0 ||
+            oldMicrosteps <= 0
+          ) {
+            document.getElementById("estepsToRotationResult").textContent =
+              "Please enter valid positive numbers for all fields";
+            return;
+          }
+
+          // Formula: rotation_distance = full_steps_per_rotation * microsteps * step_distance
+          rotationDistance = oldFullSteps * oldMicrosteps * stepDistance;
+        }
+
+        document.getElementById(
+          "estepsToRotationResult"
+        ).textContent = `Rotation Distance: ${rotationDistance.toFixed(4)}`;
+      }
+
+      function calculateBeltRotation() {
+        const beltPitch = parseFloat(
+          document.getElementById("beltPitch").value
+        );
+        const pulleyTeeth = parseInt(
+          document.getElementById("pulleyTeeth").value
+        );
+
+        if (
+          isNaN(beltPitch) ||
+          isNaN(pulleyTeeth) ||
+          beltPitch <= 0 ||
+          pulleyTeeth <= 0
+        ) {
+          document.getElementById("beltRotationResult").textContent =
+            "Please enter valid positive numbers for all fields";
+          return;
+        }
+
+        const rotationDistance = beltPitch * pulleyTeeth;
+        document.getElementById(
+          "beltRotationResult"
+        ).textContent = `Rotation Distance: ${rotationDistance.toFixed(4)}`;
+      }
+
+      function calculateLeadscrewRotation() {
+        const screwPitch = parseFloat(
+          document.getElementById("screwPitch").value
+        );
+        const threadCount = parseInt(
+          document.getElementById("threadCount").value
+        );
+
+        if (
+          isNaN(screwPitch) ||
+          isNaN(threadCount) ||
+          screwPitch <= 0 ||
+          threadCount <= 0
+        ) {
+          document.getElementById("leadscrewRotationResult").textContent =
+            "Please enter valid positive numbers for all fields";
+          return;
+        }
+
+        const rotationDistance = screwPitch * threadCount;
+        document.getElementById(
+          "leadscrewRotationResult"
+        ).textContent = `Rotation Distance: ${rotationDistance.toFixed(4)}`;
+      }
+
+      function calculateTransmissionRotation() {
+        const ratioString = document.getElementById("transmissionRatio").value;
+        const baseRotation = parseFloat(
+          document.getElementById("baseRotation").value
+        );
+
+        if (!ratioString || isNaN(baseRotation) || baseRotation <= 0) {
+          document.getElementById("transmissionRotationResult").textContent =
+            "Please enter valid values for all fields";
+          return;
+        }
+
+        // Process ratio string (a:b:c format)
+        const ratios = ratioString.split(":");
+        let finalRatio = 1;
+
+        // Simple case like "9.54647:1"
+        if (ratios.length === 2 && parseFloat(ratios[1]) === 1) {
+          finalRatio = parseFloat(ratios[0]);
+        }
+        // More complex case like "9:5:1" or "9:5"
+        else {
+          for (let i = 0; i < ratios.length - 1; i++) {
+            const numerator = parseFloat(ratios[i]);
+            const denominator = parseFloat(ratios[i + 1]);
+
+            if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+              document.getElementById(
+                "transmissionRotationResult"
+              ).textContent = "Invalid transmission ratio format";
+              return;
+            }
+
+            finalRatio *= numerator / denominator;
+          }
+        }
+
+        const rotationDistance = baseRotation * finalRatio;
+        document.getElementById(
+          "transmissionRotationResult"
+        ).textContent = `Rotation Distance: ${rotationDistance.toFixed(4)}`;
+      }
+
+      // Initialize the calculators when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        updateEstepsCalculator();
+
+        // Set Simple Calculator as default and show it
+        document.getElementById("rotationType").value = "simple";
+        updateRotationCalculator();
+      });
+
+      // Add event listener to make sure the calculator displays correctly when the tab is clicked
+      document.addEventListener("tabChanged", function (e) {
+        if (e.detail === "esteps") {
+          updateEstepsCalculator();
+
+          // Ensure rotation calculator is properly initialized if that tab is active
+          if (document.getElementById("estepsMethod").value === "rotation") {
+            updateRotationCalculator();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
