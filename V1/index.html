@@ -110,7 +110,8 @@
       <h2>How to Use This Calculator</h2>
       <p>
         This calculator helps you determine the optimal settings for your 3D
-        printer based on calibration tests from OrcaSlicer. Follow these steps:
+        printer based on calibration tests from OrcaSlicer. Follow the tabs in
+        order for best results.
       </p>
       <ol>
         <li>Select the calibration tab you need from the tabs below</li>
@@ -125,13 +126,13 @@
     </div>
 
     <div class="tabs">
-      <button class="tablinks" onclick="openTab(event, 'esteps')">
+      <button class="tablinks active" onclick="openTab(event, 'esteps')">
         E-steps/Rotation Distance
       </button>
       <button class="tablinks" onclick="openTab(event, 'tempTower')">
         Temperature Tower
       </button>
-      <button class="tablinks active" onclick="openTab(event, 'flowRate')">
+      <button class="tablinks" onclick="openTab(event, 'flowRate')">
         Flow Rate
       </button>
       <button class="tablinks" onclick="openTab(event, 'pressureAdvance')">
@@ -155,8 +156,8 @@
       <div class="calculator">
         <h3>Select Method</h3>
         <select id="flowMethod" onchange="updateFlowCalculator()">
+          <option value="yolo">YOLO Methods (Recommended)</option>
           <option value="pass">Pass Methods (old)</option>
-          <option value="yolo">YOLO Methods</option>
         </select>
 
         <div id="passMethodCalc">
@@ -711,10 +712,10 @@
         document.getElementById("passMethodCalc").style.display = "none";
         document.getElementById("yoloMethodCalc").style.display = "none";
 
-        if (method === "pass") {
-          document.getElementById("passMethodCalc").style.display = "block";
-        } else {
+        if (method === "yolo") {
           document.getElementById("yoloMethodCalc").style.display = "block";
+        } else {
+          document.getElementById("passMethodCalc").style.display = "block";
         }
       }
 
@@ -1659,6 +1660,7 @@
       // Initialize the calculators when the page loads
       document.addEventListener("DOMContentLoaded", function () {
         updateEstepsCalculator();
+        updateFlowCalculator();
 
         // Set Simple Calculator as default and show it
         document.getElementById("rotationType").value = "simple";
